@@ -108,6 +108,7 @@ while True:
 
     username = ""
     password = ""
+    action = ""
     if len(header_body) > 1:
         input_list = body.split('&')
         for input in input_list:
@@ -115,35 +116,41 @@ while True:
                 username = input.split('=')[1]
             if input.split('=')[0] == "password":
                 password = input.split('=')[1]
+            if input.split('=')[0] == "action":
+                action = input.split('=')[1]
     
     html_content_to_send = ""
     headers_to_send = ""
-        
-    try:
-        bad_cookie = False
-        good_cookie = False
-        if input_cookie_token != "":
-            if cookies_info.has_key(input_cookie_token):
-                cookie_user = cookies_info[input_cookie_token]
-                html_content_to_send = success_page + secrets_info[cookie_user]
-                good_cookie = True
-            else:
-                bad_cookie = True
-        if not good_cookie:
-            if username == "" and password == "" and bad_cookie:
-                html_content_to_send = bad_creds_page
-            elif username != "" and password == login_info[username]:
-                rand_val = random.getrandbits(64)
-                headers_to_send = 'Set-Cookie: token=' + str(rand_val) + '\r\n'
-                html_content_to_send = success_page + secrets_info[username]
-                cookies_info[str(rand_val)] = username
-            elif (username != "" and password != login_info[username])\
-             or (username == "" and password != "")\
-             or (username != "" and password == ""):
-                html_content_to_send = bad_creds_page
-            else:
-                html_content_to_send = login_page
-    except KeyError as err:
+
+    if (action == "logout"):
+        headers_to_send = 'Set-Cookie: token=; expires=Thu, 01 Jan 1970 00:00:00 GMT\r\n'
+        html_content_to_send = logout_page
+    else:
+        try:
+            bad_cookie = False
+            good_cookie = False
+            if input_cookie_token != "":
+                if cookies_info.has_key(input_cookie_token):
+                    cookie_user = cookies_info[input_cookie_token]
+                    html_content_to_send = success_page + secrets_info[cookie_user]
+                    good_cookie = True
+                else:
+                    bad_cookie = True
+            if not good_cookie:
+                if bad_cookie:
+                    html_content_to_send = bad_creds_page
+                elif username != "" and password == login_info[username]:
+                    rand_val = random.getrandbits(64)
+                    headers_to_send = 'Set-Cookie: token=' + str(rand_val) + '\r\n'
+                    html_content_to_send = success_page + secrets_info[username]
+                    cookies_info[str(rand_val)] = username
+                elif (username != "" and password != login_info[username])\
+                 or (username == "" and password != "")\
+                 or (username != "" and password == ""):
+                    html_content_to_send = bad_creds_page
+                else:
+                    html_content_to_send = login_page
+        except KeyError as err:
             html_content_to_send = bad_creds_page
 
     # You need to set the variables:
